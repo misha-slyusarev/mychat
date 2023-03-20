@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Sensitive configuration
+token.txt
+
+# Local IDE configuration
+.vscode

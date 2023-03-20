@@ -2,6 +2,9 @@
 #include <wx/log.h>
 #include <wx/wx.h>
 
+#include <fstream>
+#include <string>
+
 class MainFrame : public wxFrame {
  public:
   MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title) {
@@ -25,6 +28,17 @@ class MainFrame : public wxFrame {
     wxString inputValue = inputField->GetValue();
     wxLogDebug(inputValue);
 
+    std::ifstream infile("token.txt");
+    std::string content((std::istreambuf_iterator<char>(infile)),
+                        (std::istreambuf_iterator<char>()));
+
+    if (!infile.good()) {
+      wxLogDebug("Error: could not open file \"myfile.txt\"");
+      return;
+    }
+
+    infile.close();
+
     CURLcode res;
 
     curl_global_init(CURL_GLOBAL_ALL);
@@ -37,7 +51,7 @@ class MainFrame : public wxFrame {
           "https://api.openai.com/v1/engines/davinci-codex/completions");
       wxLogDebug("Success!");
     } else {
-      wxLogDebug("Couldn't initialize cURL");
+      wxLogDebug("Error: couldn't initialize cURL");
     }
 
     curl_easy_cleanup(curl);

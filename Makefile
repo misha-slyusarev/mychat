@@ -26,3 +26,5 @@ $(EXE): $(OBJS)
 clean:
 	rm -f $(OBJS) $(EXE)
 
+fmt:
+	clang-format -style=Google -i $(SRCS)
