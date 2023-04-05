@@ -24,3 +24,5 @@ private:
   wxTextCtrl *inputField;
   wxButton *submitButton;
 };
+
+void send_request(std::string request);
