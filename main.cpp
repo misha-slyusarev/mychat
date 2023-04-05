@@ -1,9 +1,16 @@
 #include <curl/curl.h>
 #include <wx/log.h>
 #include <wx/wx.h>
+#include <wx/frame.h>
+#include <wx/button.h>
 
 #include <fstream>
 #include <string>
+
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 
 std::string format_string(std::string &t, const std::string &s) {
   size_t index = t.find("$");
@@ -13,6 +20,7 @@ std::string format_string(std::string &t, const std::string &s) {
   return t;
 }
 
+// write callback for cURL
 static size_t write_cb(void *cnts, size_t size, size_t nmemb, void *res) {
   ((std::string *)res)->append((char *)cnts, size * nmemb);
   return size * nmemb;
@@ -43,22 +51,45 @@ class MainFrame : public wxFrame {
 
     CURL *curl;
 
-    const std::string endpoint = "https://api.openai.com/v1/chat/completions";
-    std::string payload_template = R"(
-      {
-        "model": "gpt-3.5-turbo",
-        "messages": [{"role": "user", "content": "$"}],
-        "temperature": 0.7
-      }
-    )";
+    const std::string endpoint = "https://api.openai.com/v1/completions";
+    //std::string payload_template = R"(
+    //  {
+    //    "model": "gpt-3.5-turbo",
+    //    "messages": [{"role": "user", "content": "$"}],
+    //    "temperature": 0.7
+    //  }
+    //)";
 
     wxString request = inputField->GetValue();
     wxLogDebug(request);
 
-    std::string payload =
-        format_string(payload_template, request.ToStdString());
+    //std::string payload =
+    //    format_string(payload_template, request.ToStdString());
 
-    wxLogDebug(payload.c_str());
+    //json payload = json::parse(
+    //  format_string(payload_template, request.ToStdString())
+    //);
+
+
+    json payload = {
+      {"model", "gpt-3.5-turbo"},
+      {"temperature", 1.0},
+      {"max_tokens", 500},
+      {"top_p", 1.0},
+      {"frequency_penalty", 0.0},
+      {"presence_penalty", 0.6},
+      {"stream", false},
+      {"prompt", request.ToStdString()}
+    };
+    //json messages = json::array();
+    //messages.push_back({{"role", "user"}, {"content", request.ToStdString()}});
+    //payload["messages"] = messages;
+
+    std::string payload_string = payload.dump();
+
+    //std::string payload_string = "{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"model\":\"gpt-3.5-turbo\",\"temperature\":0.7}";
+
+    wxLogDebug(payload_string.c_str());
 
     std::ifstream infile("token.txt");
 
@@ -68,7 +99,6 @@ class MainFrame : public wxFrame {
     }
     std::string token((std::istreambuf_iterator<char>(infile)),
                       (std::istreambuf_iterator<char>()));
-
     infile.close();
     auth_header = "Authorization: Bearer " + token;
 
@@ -85,7 +115,8 @@ class MainFrame : public wxFrame {
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
       curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_string.c_str());
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, payload_string.length());
 
       CURLcode result = curl_easy_perform(curl);
 
