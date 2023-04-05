@@ -10,25 +10,42 @@
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+using namespace std;
 
-
-std::string format_string(std::string &t, const std::string &s) {
+std::string format_string(std::string &t, const std::string &s)
+{
   size_t index = t.find("$");
-  if (index != std::string::npos) {
+  if (index != std::string::npos)
+  {
     t.replace(index, 1, s);
   }
   return t;
 }
 
+// remove whitespaces and technical symbols from a string
+std::string strip(const std::string &str)
+{
+  size_t start = str.find_first_not_of(" \t\n\r\v\f");
+  size_t end = str.find_last_not_of(" \t\n\r\v\f");
+  if (start != std::string::npos && end != std::string::npos)
+  {
+    return str.substr(start, end - start + 1);
+  }
+  return "";
+}
+
 // write callback for cURL
-static size_t write_cb(void *cnts, size_t size, size_t nmemb, void *res) {
+static size_t write_cb(void *cnts, size_t size, size_t nmemb, void *res)
+{
   ((std::string *)res)->append((char *)cnts, size * nmemb);
   return size * nmemb;
 }
 
-class MainFrame : public wxFrame {
- public:
-  MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title) {
+class MainFrame : public wxFrame
+{
+public:
+  MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title)
+  {
     inputField = new wxTextCtrl(this, wxID_ANY, wxEmptyString,
                                 wxDefaultPosition, wxSize(200, 24));
 
@@ -44,63 +61,47 @@ class MainFrame : public wxFrame {
     Centre();
   }
 
- private:
-  void OnSubmit(wxCommandEvent &event) {
+private:
+  void OnSubmit(wxCommandEvent &event)
+  {
+    const std::string endpoint = "https://api.openai.com/v1/chat/completions";
+
     std::string response_data;
     std::string auth_header;
 
     CURL *curl;
 
-    const std::string endpoint = "https://api.openai.com/v1/completions";
-    //std::string payload_template = R"(
-    //  {
-    //    "model": "gpt-3.5-turbo",
-    //    "messages": [{"role": "user", "content": "$"}],
-    //    "temperature": 0.7
-    //  }
-    //)";
-
     wxString request = inputField->GetValue();
     wxLogDebug(request);
 
-    //std::string payload =
-    //    format_string(payload_template, request.ToStdString());
-
-    //json payload = json::parse(
-    //  format_string(payload_template, request.ToStdString())
-    //);
-
-
     json payload = {
-      {"model", "gpt-3.5-turbo"},
-      {"temperature", 1.0},
-      {"max_tokens", 500},
-      {"top_p", 1.0},
-      {"frequency_penalty", 0.0},
-      {"presence_penalty", 0.6},
-      {"stream", false},
-      {"prompt", request.ToStdString()}
+        {"model", "gpt-3.5-turbo"},
+        {"temperature", 1.0},
+        {"max_tokens", 500},
+        {"top_p", 1.0},
+        {"frequency_penalty", 0.0},
+        {"presence_penalty", 0.6},
+        {"stream", false},
     };
-    //json messages = json::array();
-    //messages.push_back({{"role", "user"}, {"content", request.ToStdString()}});
-    //payload["messages"] = messages;
+    json messages = json::array();
+    messages.push_back({{"role", "user"}, {"content", request.ToStdString()}});
+    payload["messages"] = messages;
 
     std::string payload_string = payload.dump();
-
-    //std::string payload_string = "{\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}],\"model\":\"gpt-3.5-turbo\",\"temperature\":0.7}";
-
     wxLogDebug(payload_string.c_str());
 
     std::ifstream infile("token.txt");
-
-    if (!infile.good()) {
+    if (!infile.good())
+    {
       wxLogDebug("Error: could not open file \"token.txt\"");
       return;
     }
     std::string token((std::istreambuf_iterator<char>(infile)),
                       (std::istreambuf_iterator<char>()));
     infile.close();
-    auth_header = "Authorization: Bearer " + token;
+
+    auth_header.append("Authorization: Bearer ").append(strip(token));
+    wxLogDebug(auth_header.c_str());
 
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
@@ -109,7 +110,12 @@ class MainFrame : public wxFrame {
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, auth_header.c_str());
 
-    if (curl) {
+    if (curl)
+    {
+      wxLogDebug("Sending request..");
+      // Set the verbose option to 1 to enable debug messages
+      //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+
       curl_easy_setopt(curl, CURLOPT_URL, endpoint.c_str());
       curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
@@ -120,14 +126,18 @@ class MainFrame : public wxFrame {
 
       CURLcode result = curl_easy_perform(curl);
 
-      if (result != CURLE_OK) {
+      if (result != CURLE_OK)
+      {
         wxLogDebug("cURL error: %s", curl_easy_strerror(result));
-      } else {
+      }
+      else
+      {
+        wxLogDebug("Response received!");
         wxLogDebug("Response: %s", response_data);
       }
-
-      wxLogDebug("Success!");
-    } else {
+    }
+    else
+    {
       wxLogDebug("Error: couldn't initialize cURL");
     }
 
@@ -140,9 +150,11 @@ class MainFrame : public wxFrame {
   wxButton *submitButton;
 };
 
-class MainApplication : public wxApp {
- public:
-  bool OnInit() override {
+class MainApplication : public wxApp
+{
+public:
+  bool OnInit() override
+  {
     MainFrame *frame = new MainFrame(wxT("My Chat"));
 
     wxLog::SetActiveTarget(new wxLogWindow(frame, "Log"));
