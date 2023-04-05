@@ -7,7 +7,7 @@ LD = g++
 LDFLAGS = `wx-config --libs` -lcurl
 
 # Source files
-SRCS = main.cpp ui.cpp
+SRCS = main.cpp mychat.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
