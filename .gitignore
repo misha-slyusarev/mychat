@@ -30,6 +30,7 @@
 *.exe
 *.out
 *.app
+build/
 
 # Sensitive configuration
 token.txt

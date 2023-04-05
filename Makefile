@@ -7,24 +7,26 @@ LD = g++
 LDFLAGS = `wx-config --libs` -lcurl
 
 # Source files
-SRCS = main.cpp mychat.cpp
+SRCS = $(wildcard src/*.cpp)
 
 # Object files
-OBJS = $(SRCS:.cpp=.o)
+BUILDDIR = build
+OBJS = $(patsubst src/%.cpp, $(BUILDDIR)/%.o, $(SRCS))
 
 # Executable file
-EXE = mychat.app
+EXE = $(BUILDDIR)/mychat.app
 
 all: $(EXE)
 
 $(EXE): $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) -o $(EXE)
 
-%.o: %.cpp
+$(BUILDDIR)/%.o: src/%.cpp
+	mkdir -p $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(EXE)
+	@rm -rf $(BUILDDIR)
 
 fmt:
-	clang-format -style=Google -i $(SRCS)
+	@clang-format -style=Google -i $(SRCS)
