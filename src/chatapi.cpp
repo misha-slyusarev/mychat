@@ -2,20 +2,40 @@
 
 using json = nlohmann::json;
 
+const std::string ChatApi::ENDPOINT =
+    "https://api.openai.com/v1/chat/completions";
+
 ChatApi::ChatApi() {
   CURLcode res = curl_global_init(CURL_GLOBAL_DEFAULT);
   if (res != CURLE_OK) {
     wxLogDebug("cURL global init failed: %s", curl_easy_strerror(res));
   }
+
+  curl = curl_easy_init();
+
+  std::ifstream infile("token.txt");
+  if (!infile.good()) {
+    wxLogDebug("Error: could not open file \"token.txt\"");
+    return;
+  }
+  std::string token((std::istreambuf_iterator<char>(infile)),
+                    (std::istreambuf_iterator<char>()));
+  infile.close();
+
+  std::string auth_header = "Authorization: Bearer ";
+  auth_header.append(strip(token));
+  headers = curl_slist_append(headers, "Content-Type: application/json");
+  headers = curl_slist_append(headers, auth_header.c_str());
 }
 
-ChatApi::~ChatApi() { curl_global_cleanup(); }
+ChatApi::~ChatApi() {
+  curl_slist_free_all(headers);
+  curl_easy_cleanup(curl);
+  curl_global_cleanup();
+}
 
 void ChatApi::send_request(std::string request) {
-  const std::string endpoint = "https://api.openai.com/v1/chat/completions";
-
   std::string response_data;
-  std::string auth_header;
 
   wxLogDebug(request.c_str());
 
@@ -32,32 +52,14 @@ void ChatApi::send_request(std::string request) {
   std::string payload_string = payload.dump();
   wxLogDebug(payload_string.c_str());
 
-  std::ifstream infile("token.txt");
-  if (!infile.good()) {
-    wxLogDebug("Error: could not open file \"token.txt\"");
-    return;
-  }
-  std::string token((std::istreambuf_iterator<char>(infile)),
-                    (std::istreambuf_iterator<char>()));
-  infile.close();
-
-  auth_header.append("Authorization: Bearer ").append(strip(token));
-  // wxLogDebug(auth_header.c_str());
-
-  curl = curl_easy_init();
-
-  struct curl_slist *headers = NULL;
-  headers = curl_slist_append(headers, "Content-Type: application/json");
-  headers = curl_slist_append(headers, auth_header.c_str());
-
   if (curl) {
     wxLogDebug("Sending request..");
     // Set the verbose option to 1 to enable debug messages
     // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
-    curl_easy_setopt(curl, CURLOPT_URL, endpoint.c_str());
+    curl_easy_setopt(curl, CURLOPT_URL, ENDPOINT.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ChatApi::write_cb);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
     curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_string.c_str());
@@ -74,9 +76,6 @@ void ChatApi::send_request(std::string request) {
   } else {
     wxLogDebug("Error: couldn't initialize cURL");
   }
-
-  curl_slist_free_all(headers);
-  curl_easy_cleanup(curl);
 }
 
 std::string ChatApi::strip(const std::string &str) {

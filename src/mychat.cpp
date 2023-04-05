@@ -3,14 +3,6 @@
 using json = nlohmann::json;
 using namespace std;
 
-string format_string(string &t, const string &s) {
-  size_t index = t.find("$");
-  if (index != string::npos) {
-    t.replace(index, 1, s);
-  }
-  return t;
-}
-
 MainFrame::MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title) {
   inputField = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition,
                               wxSize(200, 24));

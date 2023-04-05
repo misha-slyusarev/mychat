@@ -13,18 +13,6 @@
 
 #include <nlohmann/json.hpp>
 
-class MainFrame : public wxFrame
-{
-public:
-  MainFrame(const wxString &title);
-
-private:
-  void OnSubmit(wxCommandEvent &event);
-
-  wxTextCtrl *inputField;
-  wxButton *submitButton;
-};
-
 class ChatApi 
 {
 public:
@@ -37,5 +25,22 @@ public:
   static size_t write_cb(void *cnts, size_t size, size_t nmemb, void *res);
 
 private:
+  static const std::string ENDPOINT;
+
   CURL *curl;
+  struct curl_slist *headers = NULL;
 };
+
+class MainFrame : public wxFrame
+{
+public:
+  MainFrame(const wxString &title);
+
+private:
+  void OnSubmit(wxCommandEvent &event);
+
+  wxTextCtrl *inputField;
+  wxButton *submitButton;
+};
+
+
