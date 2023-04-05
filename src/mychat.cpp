@@ -29,5 +29,6 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title) {
 
 void MainFrame::OnSubmit(wxCommandEvent &event) {
   string request = inputField->GetValue().ToStdString();
-  return send_request(request);
+  ChatApi chatApi = ChatApi();
+  return chatApi.send_request(request);
 };

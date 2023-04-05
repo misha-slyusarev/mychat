@@ -2,29 +2,20 @@
 
 using json = nlohmann::json;
 
-// remove whitespaces and technical symbols from a string
-std::string strip(const std::string &str) {
-  size_t start = str.find_first_not_of(" \t\n\r\v\f");
-  size_t end = str.find_last_not_of(" \t\n\r\v\f");
-  if (start != std::string::npos && end != std::string::npos) {
-    return str.substr(start, end - start + 1);
+ChatApi::ChatApi() {
+  CURLcode res = curl_global_init(CURL_GLOBAL_DEFAULT);
+  if (res != CURLE_OK) {
+    wxLogDebug("cURL global init failed: %s", curl_easy_strerror(res));
   }
-  return "";
 }
 
-// write callback for cURL
-static size_t write_cb(void *cnts, size_t size, size_t nmemb, void *res) {
-  ((std::string *)res)->append((char *)cnts, size * nmemb);
-  return size * nmemb;
-}
+ChatApi::~ChatApi() { curl_global_cleanup(); }
 
-void send_request(std::string request) {
+void ChatApi::send_request(std::string request) {
   const std::string endpoint = "https://api.openai.com/v1/chat/completions";
 
   std::string response_data;
   std::string auth_header;
-
-  CURL *curl;
 
   wxLogDebug(request.c_str());
 
@@ -51,9 +42,8 @@ void send_request(std::string request) {
   infile.close();
 
   auth_header.append("Authorization: Bearer ").append(strip(token));
-  //wxLogDebug(auth_header.c_str());
+  // wxLogDebug(auth_header.c_str());
 
-  curl_global_init(CURL_GLOBAL_ALL);
   curl = curl_easy_init();
 
   struct curl_slist *headers = NULL;
@@ -67,7 +57,7 @@ void send_request(std::string request) {
 
     curl_easy_setopt(curl, CURLOPT_URL, endpoint.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ChatApi::write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
     curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_string.c_str());
@@ -87,5 +77,18 @@ void send_request(std::string request) {
 
   curl_slist_free_all(headers);
   curl_easy_cleanup(curl);
-  curl_global_cleanup();
+}
+
+std::string ChatApi::strip(const std::string &str) {
+  size_t start = str.find_first_not_of(" \t\n\r\v\f");
+  size_t end = str.find_last_not_of(" \t\n\r\v\f");
+  if (start != std::string::npos && end != std::string::npos) {
+    return str.substr(start, end - start + 1);
+  }
+  return "";
+}
+
+size_t ChatApi::write_cb(void *cnts, size_t size, size_t nmemb, void *res) {
+  ((std::string *)res)->append((char *)cnts, size * nmemb);
+  return size * nmemb;
 }

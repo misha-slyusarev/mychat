@@ -25,4 +25,17 @@ private:
   wxButton *submitButton;
 };
 
-void send_request(std::string request);
+class ChatApi 
+{
+public:
+  ChatApi();
+  ~ChatApi();
+
+  void send_request(std::string request);
+  std::string strip(const std::string &str);
+
+  static size_t write_cb(void *cnts, size_t size, size_t nmemb, void *res);
+
+private:
+  CURL *curl;
+};
