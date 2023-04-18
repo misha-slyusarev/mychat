@@ -34,7 +34,7 @@ ChatApi::~ChatApi() {
   curl_global_cleanup();
 }
 
-void ChatApi::send_request(std::string request) {
+void ChatApi::sendRequest(std::string request) {
   std::string response_data;
 
   wxLogDebug(request.c_str());
@@ -48,22 +48,27 @@ void ChatApi::send_request(std::string request) {
   json messages = json::array();
   messages.push_back({{"role", "user"}, {"content", request}});
   payload["messages"] = messages;
+  wxLogDebug("Filled out payload");
 
   std::string payload_string = payload.dump();
   wxLogDebug(payload_string.c_str());
 
+  wxLogDebug("Ready to send request!");
   if (curl) {
-    wxLogDebug("Sending request..");
+    wxLogDebug("Configuring cURL");
+
     // Set the verbose option to 1 to enable debug messages
-    // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
     curl_easy_setopt(curl, CURLOPT_URL, ENDPOINT.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
     curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_string.c_str());
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, payload_string.length());
+
+    wxLogDebug("cURL configured. Sending request...");
 
     CURLcode result = curl_easy_perform(curl);
 
@@ -87,7 +92,7 @@ std::string ChatApi::strip(const std::string &str) {
   return "";
 }
 
-size_t ChatApi::write_cb(void *cnts, size_t size, size_t nmemb, void *res) {
+size_t ChatApi::writeCb(void *cnts, size_t size, size_t nmemb, void *res) {
   ((std::string *)res)->append((char *)cnts, size * nmemb);
   return size * nmemb;
 }

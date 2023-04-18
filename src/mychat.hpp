@@ -1,12 +1,13 @@
 #include <wx/frame.h>
 #include <wx/button.h>
 #include <wx/textctrl.h>
-
-#include <curl/curl.h>
 #include <wx/log.h>
 #include <wx/wx.h>
 #include <wx/frame.h>
 #include <wx/button.h>
+#include <wx/sizer.h>
+
+#include <curl/curl.h>
 
 #include <fstream>
 #include <string>
@@ -19,10 +20,10 @@ public:
   ChatApi();
   ~ChatApi();
 
-  void send_request(std::string request);
+  void sendRequest(std::string request);
   std::string strip(const std::string &str);
 
-  static size_t write_cb(void *cnts, size_t size, size_t nmemb, void *res);
+  static size_t writeCb(void *cnts, size_t size, size_t nmemb, void *res);
 
 private:
   static const std::string ENDPOINT;
@@ -37,10 +38,13 @@ public:
   MainFrame(const wxString &title);
 
 private:
-  void OnSubmit(wxCommandEvent &event);
+  wxTextCtrl* chatTextCtrl;
+  wxTextCtrl* inputField;
+  wxButton* submitButton;
 
-  wxTextCtrl *inputField;
-  wxButton *submitButton;
+  ChatApi* chatApi;
+
+  void OnSubmit(wxCommandEvent &event);
 };
 
 
