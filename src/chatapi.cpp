@@ -34,8 +34,9 @@ ChatApi::~ChatApi() {
   curl_global_cleanup();
 }
 
-void ChatApi::sendRequest(std::string request) {
+std::string ChatApi::sendRequest(std::string request) {
   std::string response_data;
+  std::string response;
 
   wxLogDebug(request.c_str());
 
@@ -77,10 +78,14 @@ void ChatApi::sendRequest(std::string request) {
     } else {
       wxLogDebug("Response received!");
       wxLogDebug("Response: %s", response_data);
+      json response_json = json::parse(response_data);
+      response = response_json["choices"][0]["message"]["content"];
     }
   } else {
     wxLogDebug("Error: couldn't initialize cURL");
   }
+
+  return response;
 }
 
 std::string ChatApi::strip(const std::string &str) {

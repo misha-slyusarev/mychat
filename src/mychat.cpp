@@ -28,10 +28,11 @@ MainFrame::MainFrame(const wxString &title) : wxFrame(NULL, wxID_ANY, title) {
 
 void MainFrame::OnSubmit(wxCommandEvent &event) {
   string request = inputField->GetValue().ToStdString();
-  chatApi->sendRequest(request);
+  string response = chatApi->sendRequest(request);
 
   // Append the user's message to the chat text control
   chatTextCtrl->AppendText("You: " + request + "\n");
+  chatTextCtrl->AppendText("They: " + response + "\n");
 
   inputField->SetValue(wxEmptyString);  // Clear the input field
 };

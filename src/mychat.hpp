@@ -20,7 +20,7 @@ public:
   ChatApi();
   ~ChatApi();
 
-  void sendRequest(std::string request);
+  std::string sendRequest(std::string request);
   std::string strip(const std::string &str);
 
   static size_t writeCb(void *cnts, size_t size, size_t nmemb, void *res);
