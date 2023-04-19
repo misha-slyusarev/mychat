@@ -38,7 +38,7 @@ public:
   MainFrame(const wxString &title);
 
 private:
-  wxTextCtrl* chatTextCtrl;
+  wxTextCtrl* chatWindowCtrl;
   wxTextCtrl* inputField;
   wxButton* submitButton;
 

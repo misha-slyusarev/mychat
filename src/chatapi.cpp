@@ -59,7 +59,7 @@ std::string ChatApi::sendRequest(std::string request) {
     wxLogDebug("Configuring cURL");
 
     // Set the verbose option to 1 to enable debug messages
-    //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
     curl_easy_setopt(curl, CURLOPT_URL, ENDPOINT.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
