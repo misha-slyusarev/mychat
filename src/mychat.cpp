@@ -20,6 +20,11 @@ MainFrame::MainFrame(const wxString& title)
   inputField->Bind(wxEVT_TEXT_ENTER, &MainFrame::OnSubmit, this);
   submitButton->Bind(wxEVT_BUTTON, &MainFrame::OnSubmit, this);
 
+  // Set input field's font size
+  wxFont font = inputField->GetFont();
+  font.SetPointSize(font.GetPointSize() + 5);
+  inputField->SetFont(font);
+
   // Manage items layout
   wxBoxSizer* chatWindowSizer = new wxBoxSizer(wxVERTICAL);
   wxBoxSizer* inputSizer = new wxBoxSizer(wxHORIZONTAL);
