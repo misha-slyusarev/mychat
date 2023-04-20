@@ -1,7 +1,9 @@
 #include "mychat.hpp"
 
+#include <future>
+#include <thread>
+
 using json = nlohmann::json;
-using namespace std;
 
 MainFrame::MainFrame(const wxString& title)
     : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1200, 780)) {
@@ -17,8 +19,8 @@ MainFrame::MainFrame(const wxString& title)
       new wxButton(this, wxID_ANY, "Send", wxDefaultPosition, wxDefaultSize);
 
   // Assign events to form items
-  inputField->Bind(wxEVT_TEXT_ENTER, &MainFrame::OnSubmit, this);
-  submitButton->Bind(wxEVT_BUTTON, &MainFrame::OnSubmit, this);
+  inputField->Bind(wxEVT_TEXT_ENTER, &MainFrame::OnSubmitAsync, this);
+  submitButton->Bind(wxEVT_BUTTON, &MainFrame::OnSubmitAsync, this);
 
   // Set input field's font size
   wxFont font = inputField->GetFont();
@@ -38,13 +40,21 @@ MainFrame::MainFrame(const wxString& title)
   Centre();
 }
 
-void MainFrame::OnSubmit(wxCommandEvent& event) {
-  string request = inputField->GetValue().ToStdString();
-  string response = chatApi->sendRequest(request);
-
-  // Append the user's message to the chat text control
+void MainFrame::OnSubmitAsync(wxCommandEvent& event) {
+  std::string request = inputField->GetValue().ToStdString();
   chatWindow->AppendText("You: " + request + "\n");
-  chatWindow->AppendText("They: " + response + "\n");
 
-  inputField->SetValue(wxEmptyString);  // Clear the input field
+  // Clear input field
+  inputField->SetValue(wxEmptyString);
+
+  auto future = std::async(std::launch::async, [this, request]() {
+    return chatApi->sendRequest(request);
+  });
+
+  // Execute API request on a separate thread
+  std::thread([this, future = std::move(future)]() mutable {
+    // Update chat window with response once it is received
+    std::string response = future.get();
+    chatWindow->AppendText("They: " + response + "\n");
+  }).detach();
 };

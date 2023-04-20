@@ -44,7 +44,7 @@ private:
 
   ChatApi* chatApi;
 
-  void OnSubmit(wxCommandEvent &event);
+  void OnSubmitAsync(wxCommandEvent &event);
 };
 
 
